@@ -76,6 +76,12 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.multiplyerText.text = `X ${this.multiplyer.toFixed(2)}`;
     this.multiplyerText.y = this.runner.y;
 
+    if(this.multiplyer >= 4) {
+      this.balance += this.bet * this.multiplyer;
+      this.setStateToStopped();
+      this.setStateToInitial();
+    }
+
     if (this.multiplyer >= this.maxMultiplyerForThisRound) {
       // console.log("Cought!");
       this.setStateToStopped();
