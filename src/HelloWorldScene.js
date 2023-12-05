@@ -31,7 +31,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.load.image("StartButton", "images/StartButton.png");
     this.load.image("RunButton", "images/RunButton.png");
     this.load.image("CollectButton", "images/CollectButton.png");
-    this.load.image("RedScreen", "images/RedScreen.png");
+    this.load.image("RedScreen", "images/redScreen.png");
   }
 
   create() {
@@ -69,7 +69,6 @@ export default class HelloWorldScene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    console.log(this.guard.angle);
 
     if (this.state === 1) {
       this.runner.y -= (200 * delta) / 1000;
@@ -91,7 +90,6 @@ export default class HelloWorldScene extends Phaser.Scene {
     }
 
     if (this.multiplyer >= this.maxMultiplyerForThisRound) {
-      // console.log("Cought!");
       this.setStateToStopped();
       this.setStateToCaught();
     }
@@ -111,7 +109,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     });
 
     this.startButton.on("pointerup", () => {
-      if (this.state === 0) return;
+      if (this.state !== 1) return;
 
       this.setStateToStopped();
 
@@ -196,5 +194,5 @@ export default class HelloWorldScene extends Phaser.Scene {
     }
   }
 
-  setStateToCought;
+  // setStateToCought;
 }
