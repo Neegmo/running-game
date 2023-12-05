@@ -31,6 +31,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.load.image("StartButton", "images/StartButton.png");
     this.load.image("RunButton", "images/RunButton.png");
     this.load.image("CollectButton", "images/CollectButton.png");
+    this.load.image("RedScreen", "images/RedScreen.png");
   }
 
   create() {
@@ -61,13 +62,20 @@ export default class HelloWorldScene extends Phaser.Scene {
       })
       .setAlpha(0);
 
+    this.redScreen = this.add.image(0, 0, "RedScreen").setScale(2, 2);
+    this.redScreen.setAlpha(0);
+
     this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.2, 4.2);
   }
 
   update(time, delta) {
+    console.log(this.guard.angle);
+
     if (this.state === 1) {
       this.runner.y -= (200 * delta) / 1000;
       this.multiplyer += (0.5 * delta) / 1000;
+    } else if (this.state === 3) {
+      this.runnerCaughtAnimationSequence(delta);
     }
 
     this.balanceText.text = `BALANCE: \n${this.balance.toFixed(2)}`;
@@ -76,7 +84,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.multiplyerText.text = `X ${this.multiplyer.toFixed(2)}`;
     this.multiplyerText.y = this.runner.y;
 
-    if(this.multiplyer >= 4) {
+    if (this.multiplyer >= 4) {
       this.balance += this.bet * this.multiplyer;
       this.setStateToStopped();
       this.setStateToInitial();
@@ -85,14 +93,9 @@ export default class HelloWorldScene extends Phaser.Scene {
     if (this.multiplyer >= this.maxMultiplyerForThisRound) {
       // console.log("Cought!");
       this.setStateToStopped();
-      this.setStateToInitial();
-      this.guard.angle += 180;
+      this.setStateToCaught();
     }
-
-    // console.log(this.collectButton);
-
-    
-  }
+  } //update
 
   createStartButton() {
     this.startButton = this.add
@@ -108,7 +111,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     });
 
     this.startButton.on("pointerup", () => {
-      if(this.state === 0) return;
+      if (this.state === 0) return;
 
       this.setStateToStopped();
 
@@ -145,16 +148,14 @@ export default class HelloWorldScene extends Phaser.Scene {
   }
 
   setStateToInitial() {
-    
     this.runner.x = 640;
     this.runner.y = 2200;
-    
+
     this.multiplyer = 0;
     this.multiplyerText.setAlpha(0);
-    
-    this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.2, 4.2);
-    if(this.runButton !== undefined){
 
+    this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.2, 4.2);
+    if (this.runButton !== undefined) {
       this.runButton.destroy();
       this.collectButton.destroy();
     }
@@ -168,6 +169,31 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   setStateToStopped() {
     this.state = 2;
+  }
+
+  setStateToCaught() {
+    this.state = 3;
+  }
+
+  runnerCaughtAnimationSequence(deltaTime) {
+    if (this.guard.angle < 175 && this.guard.angle > -175) {
+      this.guard.angle += deltaTime / 2;
+    } else if (
+      this.guard.angle >= 175 ||
+      this.guard.angle <= -175 &&
+      this.redScreen.alpha < 0.5
+    ) {
+      this.guard.angle = 180;
+      let currentalpha = this.redScreen.alpha;
+      this.redScreen.setAlpha(currentalpha + deltaTime / 750);
+    } else if (
+      this.guard.angle >= 175 ||
+      this.guard.angle <= -175 &&
+      this.redScreen.alpha >= 0.5
+    ) {
+      this.redScreen.setAlpha(0);
+      this.setStateToInitial();
+    }
   }
 
   setStateToCought;
