@@ -69,7 +69,6 @@ export default class HelloWorldScene extends Phaser.Scene {
   }
 
   update(time, delta) {
-
     if (this.state === 1) {
       this.runner.y -= (200 * delta) / 1000;
       this.multiplyer += (0.5 * delta) / 1000;
@@ -178,19 +177,19 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.guard.angle += deltaTime / 2;
     } else if (
       this.guard.angle >= 175 ||
-      this.guard.angle <= -175 &&
-      this.redScreen.alpha < 0.5
+      (this.guard.angle <= -175 && this.redScreen.alpha < 0.5)
     ) {
       this.guard.angle = 180;
       let currentalpha = this.redScreen.alpha;
       this.redScreen.setAlpha(currentalpha + deltaTime / 750);
     } else if (
       this.guard.angle >= 175 ||
-      this.guard.angle <= -175 &&
-      this.redScreen.alpha >= 0.5
+      (this.guard.angle <= -175 && this.redScreen.alpha >= 0.5)
     ) {
-      this.redScreen.setAlpha(0);
-      this.setStateToInitial();
+      this.time.delayedCall(500, () => {
+        this.redScreen.setAlpha(0);
+        this.setStateToInitial();
+      });
     }
   }
 
