@@ -38,6 +38,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.load.image("StartButtonHolder", "images/StartButtonHolder.png");
     this.load.image("Ninja", "images/Ninja.png");
     this.load.image("Trees", "images/Trees.png");
+    this.load.image("Bush", "images/Bush.png");
   }
 
   create() {
@@ -131,6 +132,8 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.setStateToStopped();
 
       this.createCollectButton();
+
+      this.animateBush()
     });
   }
 
@@ -143,6 +146,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.collectButton.on("pointerdown", () => {
       this.balance += this.bet * this.multiplyer;
       this.setStateToInitial();
+      if(this.bush) this.bush.destroy()
     });
 
     this.collectButton.on("pointerup", () => {});
@@ -168,6 +172,10 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.runner.flipX = !this.runner.flipX
     this.animateRunning()
+
+    if(this.bush) {
+      this.bush.destroy()
+    }
   }
 
   animateRunning() {
@@ -180,6 +188,10 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   setStateToStopped() {
     this.state = 2;
+  }
+
+  animateBush(){
+   this.bush = this.add.image(this.runner.x, this.runner.y, "Bush").setScale(1.2, 1.2)
   }
 
   setStateToCaught() {
