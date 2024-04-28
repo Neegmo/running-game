@@ -28,29 +28,37 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.load.image("Background", "images/bg.png");
     this.load.image("Runner", "images/Runner.png");
     this.load.image("Guard", "images/Guard.png");
+    this.load.image("GuardLooking", "images/GuardLooking.png");
     this.load.image("StartButton", "images/StartButton.png");
     this.load.image("RunButton", "images/RunButton.png");
-    this.load.image("CollectButton", "images/CollectButton.png");
+    this.load.image("Collect", "images/Collect.png");
     this.load.image("RedScreen", "images/redScreen.png");
+    this.load.image("Stage", "images/Stage.png");
+    this.load.image("UIHolder", "images/UIHolder.png");
+    this.load.image("StartButtonHolder", "images/StartButtonHolder.png");
+    this.load.image("Ninja", "images/Ninja.png");
+    this.load.image("Trees", "images/Trees.png");
   }
 
   create() {
-    this.add.image(0, 0, "Background").setScale(2, 2);
+    this.add.image(0, 0, "Stage").setOrigin(0, 0).setScale(1.2, 1.45);
+    this.add.image(0, 0, "Trees").setOrigin(0, 0).setScale(1.2, 1.45);
+    this.add.image(0, 2650, "UIHolder").setOrigin(0, 0).setScale(1.2, 1.2);
 
     this.createStartButton();
 
-    this.runner = new Runner(this, 640, 2200, "Runner");
+    this.runner = new Runner(this, 640, 2400, "Ninja");
     this.add.existing(this.runner);
 
-    this.guard = new Guard(this, 640, 200, "Guard");
+    this.guard = new Guard(this, 640, 500, "Guard");
     this.add.existing(this.guard);
 
-    this.balanceText = this.add.text(80, 2620, `BALANCE: \n${this.balance}`, {
+    this.balanceText = this.add.text(80, 2700, `BALANCE: ${this.balance}`, {
       fontSize: "60px",
       strokeThickness: 5,
     });
 
-    this.betText = this.add.text(900, 2620, `BET: \n${this.bet}`, {
+    this.betText = this.add.text(900, 2700, `BET: ${this.bet}`, {
       fontSize: "60px",
       strokeThickness: 5,
     });
@@ -60,7 +68,8 @@ export default class HelloWorldScene extends Phaser.Scene {
         fontSize: "60px",
         strokeThickness: 5,
       })
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(2);
 
     this.redScreen = this.add.image(0, 0, "RedScreen").setScale(2, 2);
     this.redScreen.setAlpha(0);
@@ -72,12 +81,14 @@ export default class HelloWorldScene extends Phaser.Scene {
     if (this.state === 1) {
       this.runner.y -= (200 * delta) / 1000;
       this.multiplyer += (0.5 * delta) / 1000;
+      // this.collectButton.y = this.runner.y
     } else if (this.state === 3) {
-      this.runnerCaughtAnimationSequence(delta);
+      // this.runnerCaughtAnimationSequence(delta);
+      this.runnerCaughtSequence2(delta)
     }
 
-    this.balanceText.text = `BALANCE: \n${this.balance.toFixed(2)}`;
-    this.betText.text = `BET: \n${this.bet}`;
+    this.balanceText.text = `BALANCE: ${this.balance.toFixed(2)}`;
+    this.betText.text = `BET: ${this.bet}`;
 
     this.multiplyerText.text = `X ${this.multiplyer.toFixed(2)}`;
     this.multiplyerText.y = this.runner.y;
@@ -95,16 +106,23 @@ export default class HelloWorldScene extends Phaser.Scene {
   } //update
 
   createStartButton() {
+    this.add.image(1100, 2410, "StartButtonHolder").setScale(1.2, 1.2);
     this.startButton = this.add
-      .image(640, 2500, "StartButton")
-      .setScale(0.5, 0.5);
+      .image(1100, 2400, "StartButton")
+      .setScale(1.2, 1.2);
     this.startButton.setInteractive();
 
     this.startButton.on("pointerdown", () => {
+      if (this.state === 0) {
+        console.log("Balance")
+        this.balance -= this.bet;
+      } 
       this.setStateToRunning();
-      this.balance -= this.bet;
       this.multiplyerText.setAlpha(1);
       this.guard.angle = 0;
+
+
+      if (this.collectButton) this.collectButton.destroy();
     });
 
     this.startButton.on("pointerup", () => {
@@ -113,14 +131,13 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.setStateToStopped();
 
       this.createCollectButton();
-      this.createRunButton();
     });
   }
 
   createCollectButton() {
     this.collectButton = this.add
-      .image(1040, 2500, "CollectButton")
-      .setScale(0.5, 0.5);
+      .image(1040, this.runner.y, "Collect")
+      .setScale(1.2, 1.2);
     this.collectButton.setInteractive();
 
     this.collectButton.on("pointerdown", () => {
@@ -131,19 +148,6 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.collectButton.on("pointerup", () => {});
   }
 
-  createRunButton() {
-    this.runButton = this.add.image(640, 2500, "RunButton").setScale(0.5, 0.5);
-    this.runButton.setInteractive();
-
-    this.runButton.on("pointerdown", () => {
-      this.setStateToRunning();
-    });
-
-    this.runButton.on("pointerup", () => {
-      this.setStateToStopped();
-    });
-  }
-
   setStateToInitial() {
     this.runner.x = 640;
     this.runner.y = 2200;
@@ -152,16 +156,26 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.multiplyerText.setAlpha(0);
 
     this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.2, 4.2);
-    if (this.runButton !== undefined) {
-      this.runButton.destroy();
+    if (this.collectButton) {
       this.collectButton.destroy();
     }
-
+    this.guard.setTexture("Guard")
     this.state = 0;
   }
 
   setStateToRunning() {
     this.state = 1;
+
+    this.runner.flipX = !this.runner.flipX
+    this.animateRunning()
+  }
+
+  animateRunning() {
+    if(this.state !== 1) return
+    this.time.delayedCall(100, () =>{
+      this.runner.flipX = !this.runner.flipX
+      this.animateRunning()
+    })
   }
 
   setStateToStopped() {
@@ -191,6 +205,17 @@ export default class HelloWorldScene extends Phaser.Scene {
         this.setStateToInitial();
       });
     }
+  }
+  runnerCaughtSequence2(deltaTime) {
+    this.guard.setTexture("GuardLooking")
+    if (this.redScreen.alpha < 0.5) {
+      let currentalpha = this.redScreen.alpha;
+      this.redScreen.setAlpha(currentalpha + deltaTime / 750);
+    }
+    this.time.delayedCall(1000, () => {
+      this.redScreen.setAlpha(0);
+      this.setStateToInitial();
+    });
   }
 
   // setStateToCought;
