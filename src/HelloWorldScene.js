@@ -20,6 +20,14 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   state = 0;
 
+  progress = 0;
+
+  startRunnerY = 2500;
+  endRunnerY = 700;
+
+  minMultiplyer = 0.2;
+  maxMultiplyer = 10;
+
   constructor() {
     super("hello-world");
   }
@@ -48,7 +56,7 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.createStartButton();
 
-    this.runner = new Runner(this, 640, 2400, "Ninja");
+    this.runner = new Runner(this, 640, 2500, "Ninja");
     this.add.existing(this.runner);
 
     this.guard = new Guard(this, 640, 500, "Guard");
@@ -65,23 +73,30 @@ export default class HelloWorldScene extends Phaser.Scene {
     });
 
     this.multiplyerText = this.add
-      .text(900, this.runner.y, `X ${this.multiplyer}`, {
+      .text(300, this.runner.y + 20, `X ${this.multiplyer}`, {
         fontSize: "60px",
         strokeThickness: 5,
       })
       .setAlpha(0)
+      .setOrigin(0.5, 0.5)
       .setDepth(2);
 
     this.redScreen = this.add.image(0, 0, "RedScreen").setScale(2, 2);
     this.redScreen.setAlpha(0);
 
-    this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.2, 4.2);
+    this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(this.minMultiplyer, this.maxMultiplyer);
   }
 
   update(time, delta) {
     if (this.state === 1) {
-      this.runner.y -= (200 * delta) / 1000;
-      this.multiplyer += (0.5 * delta) / 1000;
+
+      // if(this.progress + delta / 5000 <= 1) this.progress += delta / 5000;
+      // else this.progress = 1
+
+      this.progress += delta / 5000;
+
+      this.runner.y = this.lerp(this.startRunnerY, this.endRunnerY, this.progress);
+      this.multiplyer = this.lerp(this.minMultiplyer, this.maxMultiplyer, this.progress)
       // this.collectButton.y = this.runner.y
     } else if (this.state === 3) {
       // this.runnerCaughtAnimationSequence(delta);
@@ -91,16 +106,16 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.balanceText.text = `BALANCE: ${this.balance.toFixed(2)}`;
     this.betText.text = `BET: ${this.bet}`;
 
-    this.multiplyerText.text = `X ${this.multiplyer.toFixed(2)}`;
-    this.multiplyerText.y = this.runner.y;
+    this.multiplyerText.text = `X${this.multiplyer.toFixed(2)}`;
+    this.multiplyerText.y = this.runner.y + 25;
 
-    if (this.multiplyer >= 4) {
+    if (this.multiplyer >= this.maxMultiplyer) {
       this.balance += this.bet * this.multiplyer;
       this.setStateToStopped();
       this.setStateToInitial();
     }
 
-    if (this.multiplyer >= this.maxMultiplyerForThisRound) {
+    if (this.multiplyer >= this.maxMultiplyerForThisRound + 0.1) {
       this.setStateToStopped();
       this.setStateToCaught();
     }
@@ -139,7 +154,7 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   createCollectButton() {
     this.collectButton = this.add
-      .image(1040, this.runner.y, "Collect")
+      .image(300, this.runner.y, "Collect")
       .setScale(1.2, 1.2);
     this.collectButton.setInteractive();
 
@@ -153,13 +168,13 @@ export default class HelloWorldScene extends Phaser.Scene {
   }
 
   setStateToInitial() {
-    this.runner.x = 640;
-    this.runner.y = 2200;
+    this.progress = 0;
+    this.runner.y = this.startRunnerY
 
     this.multiplyer = 0;
     this.multiplyerText.setAlpha(0);
 
-    this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.2, 4.2);
+    this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(this.minMultiplyer, this.maxMultiplyer);
     if (this.collectButton) {
       this.collectButton.destroy();
     }
@@ -229,6 +244,11 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.setStateToInitial();
     });
   }
+
+  lerp( a, b, alpha ) {
+    if (alpha > 1) alpha = 1
+    return a + alpha * ( b - a )
+   }
 
   // setStateToCought;
 }
