@@ -142,8 +142,6 @@ export default class HelloWorldScene extends Phaser.Scene {
     } else {
       this.thirdCatchingPointCase();
     }
-
-    this.maxMultiplyerForThisRound = 12;
     console.log(this.maxMultiplyerForThisRound);
   }
 
