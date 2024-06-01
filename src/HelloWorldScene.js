@@ -27,6 +27,7 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   minMultiplyer = 0.2;
   maxMultiplyer = 10;
+  coinPresent = false;
 
   constructor() {
     super("hello-world");
@@ -47,6 +48,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.load.image("Ninja", "images/Ninja.png");
     this.load.image("Trees", "images/Trees.png");
     this.load.image("Bush", "images/Bush.png");
+    this.load.image("Coin", "images/Coin.png");
   }
 
   create() {
@@ -84,23 +86,27 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.redScreen = this.add.image(0, 0, "RedScreen").setScale(2, 2);
     this.redScreen.setAlpha(0);
 
-    this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(this.minMultiplyer, this.maxMultiplyer);
+    this.generateCatchingPoint();
   }
 
   update(time, delta) {
     if (this.state === 1) {
-
-      // if(this.progress + delta / 5000 <= 1) this.progress += delta / 5000;
-      // else this.progress = 1
-
       this.progress += delta / 5000;
 
-      this.runner.y = this.lerp(this.startRunnerY, this.endRunnerY, this.progress);
-      this.multiplyer = this.lerp(this.minMultiplyer, this.maxMultiplyer, this.progress)
+      this.runner.y = this.lerp(
+        this.startRunnerY,
+        this.endRunnerY,
+        this.progress
+      );
+      this.multiplyer = this.lerp(
+        this.minMultiplyer,
+        this.maxMultiplyer,
+        this.progress
+      );
       // this.collectButton.y = this.runner.y
     } else if (this.state === 3) {
       // this.runnerCaughtAnimationSequence(delta);
-      this.runnerCaughtSequence2(delta)
+      this.runnerCaughtSequence2(delta);
     }
 
     this.balanceText.text = `BALANCE: ${this.balance.toFixed(2)}`;
@@ -109,6 +115,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.multiplyerText.text = `X${this.multiplyer.toFixed(2)}`;
     this.multiplyerText.y = this.runner.y + 25;
 
+    // Ovo se pozove vise puta osmisli samo kako da pozoves jednom
     if (this.multiplyer >= this.maxMultiplyer) {
       this.balance += this.bet * this.multiplyer;
       this.setStateToStopped();
@@ -119,7 +126,55 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.setStateToStopped();
       this.setStateToCaught();
     }
+
+    this.collectCoin();
+    console.log(this.runner.y);
   } //update
+
+  generateCatchingPoint() {
+    this.firstRandomNumber = Phaser.Math.Between(1, 100);
+    this.secondRandomNumber = Phaser.Math.Between(1, 100);
+
+    if (this.firstRandomNumber < 61) {
+      this.firstCatchingPointCase();
+    } else if (this.firstRandomNumber < 96) {
+      this.secondCatchingPointCase();
+    } else {
+      this.thirdCatchingPointCase();
+    }
+
+    this.maxMultiplyerForThisRound = 12;
+    console.log(this.maxMultiplyerForThisRound);
+  }
+
+  firstCatchingPointCase() {
+    if (this.secondRandomNumber < 81)
+      this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.1, 4);
+    else this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(4.1, 6);
+  }
+
+  secondCatchingPointCase() {
+    this.createCoin(2400, 1.3);
+    if (this.secondRandomNumber < 41)
+      this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.1, 1.3);
+    else if (this.secondRandomNumber < 96)
+      this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(2.6, 4);
+    else this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(4.1, 7.3);
+  }
+
+  thirdCatchingPointCase() {
+    this.createCoin(1770, 4);
+    if (this.secondRandomNumber < 61)
+      this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.1, 4);
+    else this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(8, 10);
+  }
+
+  createCoin(height, addition) {
+    this.coin = this.add.image(642, height, "Coin");
+    this.coinHeight = height;
+    this.multiplyerAddition = addition;
+    this.coinPresent = true;
+  }
 
   createStartButton() {
     this.add.image(1100, 2410, "StartButtonHolder").setScale(1.2, 1.2);
@@ -130,13 +185,12 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.startButton.on("pointerdown", () => {
       if (this.state === 0) {
-        console.log("Balance")
+        console.log("Balance");
         this.balance -= this.bet;
-      } 
+      }
       this.setStateToRunning();
       this.multiplyerText.setAlpha(1);
       this.guard.angle = 0;
-
 
       if (this.collectButton) this.collectButton.destroy();
     });
@@ -148,7 +202,7 @@ export default class HelloWorldScene extends Phaser.Scene {
 
       this.createCollectButton();
 
-      this.animateBush()
+      this.animateBush();
     });
   }
 
@@ -161,7 +215,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.collectButton.on("pointerdown", () => {
       this.balance += this.bet * this.multiplyer;
       this.setStateToInitial();
-      if(this.bush) this.bush.destroy()
+      if (this.bush) this.bush.destroy();
     });
 
     this.collectButton.on("pointerup", () => {});
@@ -169,44 +223,57 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   setStateToInitial() {
     this.progress = 0;
-    this.runner.y = this.startRunnerY
+    this.runner.y = this.startRunnerY;
 
     this.multiplyer = 0;
     this.multiplyerText.setAlpha(0);
 
-    this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(this.minMultiplyer, this.maxMultiplyer);
+    this.generateCatchingPoint();
+
     if (this.collectButton) {
       this.collectButton.destroy();
     }
-    this.guard.setTexture("Guard")
+    this.guard.setTexture("Guard");
     this.state = 0;
+  }
+
+  collectCoin() {
+    if (!this.coinPresent) return;
+    if (this.runner.y <= this.coinHeight + 10) {
+      this.coin.destroy();
+      this.balance += this.multiplyerAddition;
+      this.coinPresent = false;
+    }
   }
 
   setStateToRunning() {
     this.state = 1;
 
-    this.runner.flipX = !this.runner.flipX
-    this.animateRunning()
+    this.runner.flipX = !this.runner.flipX;
+    this.animateRunning();
 
-    if(this.bush) {
-      this.bush.destroy()
+    if (this.bush) {
+      this.bush.destroy();
     }
   }
 
   animateRunning() {
-    if(this.state !== 1) return
-    this.time.delayedCall(100, () =>{
-      this.runner.flipX = !this.runner.flipX
-      this.animateRunning()
-    })
+    if (this.state !== 1) return;
+    this.time.delayedCall(100, () => {
+      this.runner.flipX = !this.runner.flipX;
+      this.animateRunning();
+    });
   }
 
   setStateToStopped() {
     this.state = 2;
   }
 
-  animateBush(){
-   this.bush = this.add.image(this.runner.x, this.runner.y, "Bush").setScale(1.2, 1.2)
+  animateBush() {
+    this.bush = this.add
+      .image(this.runner.x, this.runner.y, "Bush")
+      .setScale(1.2, 1.2)
+      .setDepth(3);
   }
 
   setStateToCaught() {
@@ -234,7 +301,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     }
   }
   runnerCaughtSequence2(deltaTime) {
-    this.guard.setTexture("GuardLooking")
+    this.guard.setTexture("GuardLooking");
     if (this.redScreen.alpha < 0.5) {
       let currentalpha = this.redScreen.alpha;
       this.redScreen.setAlpha(currentalpha + deltaTime / 750);
@@ -245,10 +312,10 @@ export default class HelloWorldScene extends Phaser.Scene {
     });
   }
 
-  lerp( a, b, alpha ) {
-    if (alpha > 1) alpha = 1
-    return a + alpha * ( b - a )
-   }
+  lerp(a, b, alpha) {
+    if (alpha > 1) alpha = 1;
+    return a + alpha * (b - a);
+  }
 
   // setStateToCought;
 }
