@@ -29,6 +29,8 @@ export default class HelloWorldScene extends Phaser.Scene {
   maxMultiplyer = 6;
   coinPresent = false;
 
+  bonus = 0;
+
   constructor() {
     super("hello-world");
   }
@@ -64,10 +66,12 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.guard = new Guard(this, 640, 500, "Guard");
     this.add.existing(this.guard);
 
-    this.balanceText = this.add.text(80, 2700, `BALANCE: ${this.balance}`, {
-      fontSize: "60px",
-      strokeThickness: 5,
-    });
+    this.balanceText = this.add
+      .text(350, 2730, `BALANCE: ${this.balance}`, {
+        fontSize: "60px",
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5, 0.5);
 
     this.betText = this.add.text(900, 2700, `BET: ${this.bet}`, {
       fontSize: "60px",
@@ -98,12 +102,9 @@ export default class HelloWorldScene extends Phaser.Scene {
         this.endRunnerY,
         this.progress
       );
-      this.multiplyer = this.lerp(
-        this.minMultiplyer,
-        this.maxMultiplyer,
-        this.progress
-      );
-
+      this.multiplyer =
+        this.lerp(this.minMultiplyer, this.maxMultiplyer, this.progress) +
+        this.bonus;
       // this.collectButton.y = this.runner.y
     } else if (this.state === 3) {
       this.runnerCaughtSequence2(delta);
@@ -120,7 +121,6 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.multiplyer >= this.maxMultiplyerForThisRound + 0.1 &&
       this.state !== 3
     ) {
-      console.log("TestCaught");
       this.setStateToCaught();
     }
   }
@@ -144,6 +144,8 @@ export default class HelloWorldScene extends Phaser.Scene {
     } else {
       this.thirdCatchingPointCase();
     }
+
+    this.maxMultiplyerForThisRound = 12;
   }
 
   firstCatchingPointCase() {
@@ -153,7 +155,7 @@ export default class HelloWorldScene extends Phaser.Scene {
   }
 
   secondCatchingPointCase() {
-    this.createCoin(2400, 1.3);
+    this.createCoin(2120, 1.3);
     if (this.secondRandomNumber < 41)
       this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.1, 1.3);
     else if (this.secondRandomNumber < 96)
@@ -162,7 +164,7 @@ export default class HelloWorldScene extends Phaser.Scene {
   }
 
   thirdCatchingPointCase() {
-    this.createCoin(1770, 4);
+    this.createCoin(1300, 4);
     if (this.secondRandomNumber < 61)
       this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(0.1, 4);
     else this.maxMultiplyerForThisRound = Phaser.Math.FloatBetween(8, 10);
@@ -188,7 +190,6 @@ export default class HelloWorldScene extends Phaser.Scene {
       }
       this.setStateToRunning();
       this.multiplyerText.setAlpha(1);
-      this.guard.angle = 0;
 
       if (this.collectButton) this.collectButton.destroy();
     });
@@ -223,31 +224,73 @@ export default class HelloWorldScene extends Phaser.Scene {
     if (!this.coinPresent) return;
     if (this.runner.y <= this.coinHeight + 10) {
       this.coin.destroy();
-      this.balance += this.multiplyerAddition;
+      this.bonus = this.multiplyerAddition;
+      this.animateMultiPlyer();
       this.coinPresent = false;
     }
+  }
+
+  animateMultiPlyer() {
+    this.multiplyerText.setColor("#00ff00");
+    this.tweens.add({
+      targets: this.multiplyerText,
+      scaleX: 1.4,
+      scaleY: 1.4,
+      yoyo: true,
+      ease: "Expo.easeOut",
+      duration: 200,
+      onComplete: () => {
+        this.multiplyerText.setColor("#ffffff");
+      },
+    });
+  }
+
+  betCollectedSequence() {
+    this.balanceText.setColor("#00ff00");
+    this.tweens.add({
+      targets: this.balanceText,
+      scaleX: 1.4,
+      scaleY: 1.4,
+      yoyo: true,
+      ease: "Expo.easeOut",
+      duration: 200,
+      onComplete: () => {
+        this.balanceText.setColor("#ffffff");
+        this.runner.y = this.startRunnerY;
+
+        this.multiplyer = 0;
+        this.multiplyerText.setAlpha(0);
+
+        this.generateCatchingPoint();
+
+        if (this.collectButton) {
+          this.collectButton.destroy();
+        }
+        this.guard.setTexture("Guard");
+
+        if (this.bush) {
+          this.bush.destroy();
+          this.bush == null;
+        }
+
+        this.bonus = 0;
+      },
+    });
   }
 
   setStateToInitial() {
     if (this.state === 0) return;
     this.progress = 0;
-    this.runner.y = this.startRunnerY;
 
-    this.multiplyer = 0;
-    this.multiplyerText.setAlpha(0);
+    this.betCollectedSequence();
 
-    this.generateCatchingPoint();
-
-    if (this.collectButton) {
-      this.collectButton.destroy();
-    }
-    this.guard.setTexture("Guard");
     this.state = 0;
   }
 
   setStateToRunning() {
-    this.state = 1;
+    if (this.state === 1) return;
 
+    this.state = 1;
     this.runner.flipX = !this.runner.flipX;
     this.animateRunning();
 
@@ -257,10 +300,12 @@ export default class HelloWorldScene extends Phaser.Scene {
   }
 
   setStateToStopped() {
+    if (this.state === 2) return;
     this.state = 2;
   }
 
   setStateToCaught() {
+    if (this.state === 3) return;
     this.state = 3;
   }
   animateRunning() {
@@ -278,26 +323,6 @@ export default class HelloWorldScene extends Phaser.Scene {
       .setDepth(3);
   }
 
-  runnerCaughtAnimationSequence(deltaTime) {
-    if (this.guard.angle < 175 && this.guard.angle > -175) {
-      this.guard.angle += deltaTime / 2;
-    } else if (
-      this.guard.angle >= 175 ||
-      (this.guard.angle <= -175 && this.redScreen.alpha < 0.5)
-    ) {
-      this.guard.angle = 180;
-      let currentalpha = this.redScreen.alpha;
-      this.redScreen.setAlpha(currentalpha + deltaTime / 750);
-    } else if (
-      this.guard.angle >= 175 ||
-      (this.guard.angle <= -175 && this.redScreen.alpha >= 0.5)
-    ) {
-      this.time.delayedCall(500, () => {
-        this.redScreen.setAlpha(0);
-        this.setStateToInitial();
-      });
-    }
-  }
   runnerCaughtSequence2(deltaTime) {
     if (this.state !== 3) return;
     this.guard.setTexture("GuardLooking");
@@ -309,13 +334,10 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.redScreen.setAlpha(0);
       this.setStateToInitial();
     });
-    this.setStateToStopped();
   }
 
   lerp(a, b, alpha) {
     if (alpha > 1) alpha = 1;
     return a + alpha * (b - a);
   }
-
-  // setStateToCought;
 }
