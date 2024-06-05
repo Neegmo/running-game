@@ -105,6 +105,7 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.multiplyer =
         this.lerp(this.minMultiplyer, this.maxMultiplyer, this.progress) +
         this.bonus;
+
       // this.collectButton.y = this.runner.y
     } else if (this.state === 3) {
       this.runnerCaughtSequence2(delta);
@@ -144,8 +145,6 @@ export default class HelloWorldScene extends Phaser.Scene {
     } else {
       this.thirdCatchingPointCase();
     }
-
-    this.maxMultiplyerForThisRound = 12;
   }
 
   firstCatchingPointCase() {
