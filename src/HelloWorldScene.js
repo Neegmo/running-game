@@ -25,8 +25,8 @@ export default class HelloWorldScene extends Phaser.Scene {
   startRunnerY = 2500;
   endRunnerY = 700;
 
-  minMultiplyer = 0.2;
-  maxMultiplyer = 10;
+  minMultiplyer = 0.1;
+  maxMultiplyer = 6;
   coinPresent = false;
 
   constructor() {
@@ -103,33 +103,35 @@ export default class HelloWorldScene extends Phaser.Scene {
         this.maxMultiplyer,
         this.progress
       );
+
       // this.collectButton.y = this.runner.y
     } else if (this.state === 3) {
-      // this.runnerCaughtAnimationSequence(delta);
       this.runnerCaughtSequence2(delta);
     }
+    this.checkProgress();
 
+    this.updateUI();
+
+    this.collectCoin();
+  } //update
+
+  checkProgress() {
+    if (
+      this.multiplyer >= this.maxMultiplyerForThisRound + 0.1 &&
+      this.state !== 3
+    ) {
+      console.log("TestCaught");
+      this.setStateToCaught();
+    }
+  }
+
+  updateUI() {
     this.balanceText.text = `BALANCE: ${this.balance.toFixed(2)}`;
     this.betText.text = `BET: ${this.bet}`;
 
     this.multiplyerText.text = `X${this.multiplyer.toFixed(2)}`;
     this.multiplyerText.y = this.runner.y + 25;
-
-    // Ovo se pozove vise puta osmisli samo kako da pozoves jednom
-    if (this.multiplyer >= this.maxMultiplyer) {
-      this.balance += this.bet * this.multiplyer;
-      this.setStateToStopped();
-      this.setStateToInitial();
-    }
-
-    if (this.multiplyer >= this.maxMultiplyerForThisRound + 0.1) {
-      this.setStateToStopped();
-      this.setStateToCaught();
-    }
-
-    this.collectCoin();
-    console.log(this.runner.y);
-  } //update
+  }
 
   generateCatchingPoint() {
     this.firstRandomNumber = Phaser.Math.Between(1, 100);
@@ -142,7 +144,6 @@ export default class HelloWorldScene extends Phaser.Scene {
     } else {
       this.thirdCatchingPointCase();
     }
-    console.log(this.maxMultiplyerForThisRound);
   }
 
   firstCatchingPointCase() {
@@ -183,7 +184,6 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.startButton.on("pointerdown", () => {
       if (this.state === 0) {
-        console.log("Balance");
         this.balance -= this.bet;
       }
       this.setStateToRunning();
@@ -219,7 +219,17 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.collectButton.on("pointerup", () => {});
   }
 
+  collectCoin() {
+    if (!this.coinPresent) return;
+    if (this.runner.y <= this.coinHeight + 10) {
+      this.coin.destroy();
+      this.balance += this.multiplyerAddition;
+      this.coinPresent = false;
+    }
+  }
+
   setStateToInitial() {
+    if (this.state === 0) return;
     this.progress = 0;
     this.runner.y = this.startRunnerY;
 
@@ -235,15 +245,6 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.state = 0;
   }
 
-  collectCoin() {
-    if (!this.coinPresent) return;
-    if (this.runner.y <= this.coinHeight + 10) {
-      this.coin.destroy();
-      this.balance += this.multiplyerAddition;
-      this.coinPresent = false;
-    }
-  }
-
   setStateToRunning() {
     this.state = 1;
 
@@ -255,6 +256,13 @@ export default class HelloWorldScene extends Phaser.Scene {
     }
   }
 
+  setStateToStopped() {
+    this.state = 2;
+  }
+
+  setStateToCaught() {
+    this.state = 3;
+  }
   animateRunning() {
     if (this.state !== 1) return;
     this.time.delayedCall(100, () => {
@@ -263,19 +271,11 @@ export default class HelloWorldScene extends Phaser.Scene {
     });
   }
 
-  setStateToStopped() {
-    this.state = 2;
-  }
-
   animateBush() {
     this.bush = this.add
       .image(this.runner.x, this.runner.y, "Bush")
       .setScale(1.2, 1.2)
       .setDepth(3);
-  }
-
-  setStateToCaught() {
-    this.state = 3;
   }
 
   runnerCaughtAnimationSequence(deltaTime) {
@@ -299,6 +299,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     }
   }
   runnerCaughtSequence2(deltaTime) {
+    if (this.state !== 3) return;
     this.guard.setTexture("GuardLooking");
     if (this.redScreen.alpha < 0.5) {
       let currentalpha = this.redScreen.alpha;
@@ -308,6 +309,7 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.redScreen.setAlpha(0);
       this.setStateToInitial();
     });
+    this.setStateToStopped();
   }
 
   lerp(a, b, alpha) {
