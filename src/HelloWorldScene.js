@@ -95,7 +95,7 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   update(time, delta) {
     if (this.state === 1) {
-      this.progress += delta / 5000;
+      this.progress += delta / 7000;
 
       this.runner.y = this.lerp(
         this.startRunnerY,
