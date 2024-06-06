@@ -51,6 +51,16 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.load.image("Trees", "images/Trees.png");
     this.load.image("Bush", "images/Bush.png");
     this.load.image("Coin", "images/Coin.png");
+
+    this.load.audio("BGMusic", ["sounds/BGMusic.mp3"]);
+    this.load.audio("CoinCollectedSound", ["sounds/CoinCollectedSound.mp3"]);
+    this.load.audio("CollectSound", ["sounds/CollectSound.mp3"]);
+    this.load.audio("CoughtSound", ["sounds/CoughtSound.mp3"]);
+    this.load.audio("BushSound", ["sounds/BushSound.mp3"]);
+    this.load.audio("DecrementSound", ["sounds/DecrementSound.mp3"]);
+    this.load.audio("IncrementSound", ["sounds/IncrementSound.mp3"]);
+    this.load.audio("RunningSound", ["sounds/RunningSound.mp3"]);
+    this.load.audio("SleepingSound", ["sounds/SleepingSound.mp3"]);
   }
 
   create() {
@@ -87,10 +97,15 @@ export default class HelloWorldScene extends Phaser.Scene {
       .setOrigin(0.5, 0.5)
       .setDepth(2);
 
-    this.redScreen = this.add.image(0, 0, "RedScreen").setScale(2, 2);
+    this.redScreen = this.add
+      .image(0, 0, "RedScreen")
+      .setScale(2, 2)
+      .setDepth(5);
     this.redScreen.setAlpha(0);
 
     this.generateCatchingPoint();
+
+    this.addSounds();
   }
 
   update(time, delta) {
@@ -116,6 +131,59 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.collectCoin();
   } //update
+
+  addSounds() {
+    if (!this.BGMusic || !this.BGMusic.isPlaying) {
+      this.BGMusic = this.sound.add("BGMusic", { loop: true, volume: 0.2 });
+      this.BGMusic.play();
+    }
+    if (!this.BushSound || !this.BushSound.isPlaying) {
+      this.BushSound = this.sound.add("BushSound", { loop: false, volume: 1 });
+    }
+    if (!this.CoinCollectedSound || !this.CoinCollectedSound.isPlaying) {
+      this.CoinCollectedSound = this.sound.add("CoinCollectedSound", {
+        loop: false,
+        volume: 1,
+      });
+    }
+    if (!this.CollectSound || !this.CollectSound.isPlaying) {
+      this.CollectSound = this.sound.add("CollectSound", {
+        loop: false,
+        volume: 1,
+      });
+    }
+    if (!this.CoughtSound || !this.CoughtSound.isPlaying) {
+      this.CoughtSound = this.sound.add("CoughtSound", {
+        loop: false,
+        volume: 1,
+      });
+    }
+    if (!this.DecrementSound || !this.DecrementSound.isPlaying) {
+      this.DecrementSound = this.sound.add("DecrementSound", {
+        loop: false,
+        volume: 1,
+      });
+    }
+    if (!this.IncrementSound || !this.IncrementSound.isPlaying) {
+      this.IncrementSound = this.sound.add("IncrementSound", {
+        loop: false,
+        volume: 1,
+      });
+    }
+    if (!this.RunningSound || !this.RunningSound.isPlaying) {
+      this.RunningSound = this.sound.add("RunningSound", {
+        loop: true,
+        volume: 1,
+      });
+    }
+    if (!this.SleepingSound || !this.SleepingSound.isPlaying) {
+      this.SleepingSound = this.sound.add("SleepingSound", {
+        loop: true,
+        volume: 1,
+      });
+      this.SleepingSound.play();
+    }
+  }
 
   checkProgress() {
     if (
@@ -182,6 +250,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     if (!this.coinPresent) return;
 
     if (this.runner.y <= this.coinHeight + 10) {
+      this.CoinCollectedSound.play();
       this.coin.destroy();
       this.bonus = this.multiplyerAddition;
       this.animateMultiPlyer();
@@ -229,6 +298,7 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.balance += this.bet * this.multiplyer;
       this.betCollectedSequence();
       if (this.bush) this.bush.destroy();
+      this.CollectSound.play();
     });
 
     this.collectButton.on("pointerup", () => {});
@@ -294,6 +364,10 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.bush = undefined;
     }
 
+    this.RunningSound.stop();
+
+    if (!this.SleepingSound.isPlaying) this.SleepingSound.play();
+
     this.bonus = 0;
 
     this.state = 0;
@@ -302,7 +376,7 @@ export default class HelloWorldScene extends Phaser.Scene {
   setStateToRunning() {
     // console.log("TestRunning");
     if (this.state === 1) return;
-
+    this.RunningSound.play();
     this.state = 1;
     this.runner.flipX = !this.runner.flipX;
     this.animateRunning();
@@ -316,12 +390,16 @@ export default class HelloWorldScene extends Phaser.Scene {
     // console.log("TestStopped");
     if (this.state === 2) return;
     this.state = 2;
+    this.RunningSound.stop();
   }
 
   setStateToCaught() {
     // console.log("TestCaught");
     if (this.state === 3) return;
     this.state = 3;
+    this.CoughtSound.play();
+    this.RunningSound.stop();
+    this.SleepingSound.stop();
   }
 
   setStateToCollection() {
@@ -332,13 +410,15 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   animateRunning() {
     if (this.state !== 1) return;
-    this.time.delayedCall(100, () => {
+
+    this.time.delayedCall(170, () => {
       this.runner.flipX = !this.runner.flipX;
       this.animateRunning();
     });
   }
 
   animateBush() {
+    this.BushSound.play();
     this.bush = this.add
       .image(this.runner.x, this.runner.y, "Bush")
       .setScale(1.2, 1.2)
@@ -349,18 +429,16 @@ export default class HelloWorldScene extends Phaser.Scene {
     if (this.state !== 3) return;
 
     this.guard.setTexture("GuardLooking");
-    if (this.redScreen.alpha < 0.5) {
+    if (this.redScreen.alpha < 0.8) {
       let currentalpha = this.redScreen.alpha;
       this.redScreen.setAlpha(currentalpha + deltaTime / 750);
     } else {
-      console.log("Test");
-      this.redScreen.setAlpha(0);
-      this.setStateToInitial();
+      this.time.delayedCall(300, () => {
+        console.log("Test");
+        this.redScreen.setAlpha(0);
+        this.setStateToInitial();
+      });
     }
-    // this.time.delayedCall(1000, () => {
-    //   this.redScreen.setAlpha(0);
-    //   this.setStateToInitial();
-    // });
   }
 
   lerp(a, b, alpha) {
