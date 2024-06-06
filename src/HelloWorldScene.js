@@ -51,6 +51,8 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.load.image("Trees", "images/Trees.png");
     this.load.image("Bush", "images/Bush.png");
     this.load.image("Coin", "images/Coin.png");
+    this.load.image("IncreaseBetButton", "images/IncreaseBetButton.png");
+    this.load.image("DecreaseBetButton", "images/DecreaseBetButton.png");
 
     this.load.audio("BGMusic", ["sounds/BGMusic.mp3"]);
     this.load.audio("CoinCollectedSound", ["sounds/CoinCollectedSound.mp3"]);
@@ -83,10 +85,13 @@ export default class HelloWorldScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0.5);
 
-    this.betText = this.add.text(900, 2700, `BET: ${this.bet}`, {
-      fontSize: "60px",
-      strokeThickness: 5,
-    });
+    this.betText = this.add
+      .text(990, 2720, `BET: ${this.bet}`, {
+        fontSize: "60px",
+        strokeThickness: 5,
+        align: "center",
+      })
+      .setOrigin(0.5, 0.5);
 
     this.multiplyerText = this.add
       .text(300, this.runner.y + 20, `X ${this.multiplyer}`, {
@@ -106,6 +111,9 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.generateCatchingPoint();
 
     this.addSounds();
+
+    this.addIncreaseBetButton();
+    this.addDecreaseBetButton();
   }
 
   update(time, delta) {
@@ -134,7 +142,7 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   addSounds() {
     if (!this.BGMusic || !this.BGMusic.isPlaying) {
-      this.BGMusic = this.sound.add("BGMusic", { loop: true, volume: 0.2 });
+      this.BGMusic = this.sound.add("BGMusic", { loop: true, volume: 0.4 });
       this.BGMusic.play();
     }
     if (!this.BushSound || !this.BushSound.isPlaying) {
@@ -179,10 +187,38 @@ export default class HelloWorldScene extends Phaser.Scene {
     if (!this.SleepingSound || !this.SleepingSound.isPlaying) {
       this.SleepingSound = this.sound.add("SleepingSound", {
         loop: true,
-        volume: 1,
+        volume: 0.8,
       });
       this.SleepingSound.play();
     }
+  }
+
+  addIncreaseBetButton() {
+    this.increaseBetButton = this.add
+      .image(1200, 2720, "IncreaseBetButton")
+      .setScale(3, 3)
+      .setInteractive();
+
+    this.increaseBetButton.on("pointerup", () => {
+      console.log("TestIncrease");
+      this.bet += 10;
+      this.betText.text = `BET: ${this.bet}`;
+      this.IncrementSound.play();
+    });
+  }
+
+  addDecreaseBetButton() {
+    this.decreaseBetButton = this.add
+      .image(780, 2720, "DecreaseBetButton")
+      .setScale(3, 3)
+      .setInteractive();
+
+    this.decreaseBetButton.on("pointerup", () => {
+      if (this.bet <= 10) return;
+      this.bet -= 10;
+      this.betText.text = `BET: ${this.bet}`;
+      this.DecrementSound.play();
+    });
   }
 
   checkProgress() {
@@ -268,6 +304,8 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.startButton.on("pointerdown", () => {
       if (this.state === 0) {
         this.balance -= this.bet;
+        this.increaseBetButton.setAlpha(0);
+        this.decreaseBetButton.setAlpha(0);
       }
       this.setStateToRunning();
       this.multiplyerText.setAlpha(1);
@@ -368,8 +406,10 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     if (!this.SleepingSound.isPlaying) this.SleepingSound.play();
 
-    this.bonus = 0;
+    this.increaseBetButton.setAlpha(1);
+    this.decreaseBetButton.setAlpha(1);
 
+    this.bonus = 0;
     this.state = 0;
   }
 
@@ -433,7 +473,7 @@ export default class HelloWorldScene extends Phaser.Scene {
       let currentalpha = this.redScreen.alpha;
       this.redScreen.setAlpha(currentalpha + deltaTime / 750);
     } else {
-      this.time.delayedCall(300, () => {
+      this.time.delayedCall(700, () => {
         console.log("Test");
         this.redScreen.setAlpha(0);
         this.setStateToInitial();
