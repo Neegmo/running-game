@@ -53,6 +53,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.load.image("Coin", "images/Coin.png");
     this.load.image("IncreaseBetButton", "images/IncreaseBetButton.png");
     this.load.image("DecreaseBetButton", "images/DecreaseBetButton.png");
+    this.load.image("Z", "images/Z.png");
 
     this.load.audio("BGMusic", ["sounds/BGMusic.mp3"]);
     this.load.audio("CoinCollectedSound", ["sounds/CoinCollectedSound.mp3"]);
@@ -75,8 +76,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.runner = new Runner(this, 640, 2500, "Ninja");
     this.add.existing(this.runner);
 
-    this.guard = new Guard(this, 640, 500, "Guard");
-    this.add.existing(this.guard);
+    this.createGuard();
 
     this.balanceText = this.add
       .text(350, 2730, `BALANCE: ${this.balance}`, {
@@ -191,6 +191,24 @@ export default class HelloWorldScene extends Phaser.Scene {
       });
       this.SleepingSound.play();
     }
+  }
+
+  createGuard() {
+    this.guard = new Guard(this, 640, 500, "Guard");
+    this.add.existing(this.guard);
+
+    this.sleepingSign = this.add.image(740, 350, "Z");
+    this.tweens.add({
+      targets: this.sleepingSign,
+      X: 850,
+      Y: 240,
+      scaleX: 1.4,
+      scaleY: 1.4,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeIn",
+      duration: 1300,
+    });
   }
 
   addIncreaseBetButton() {
@@ -408,6 +426,7 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.increaseBetButton.setAlpha(1);
     this.decreaseBetButton.setAlpha(1);
+    this.sleepingSign.setAlpha(1);
 
     this.bonus = 0;
     this.state = 0;
@@ -440,6 +459,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.CoughtSound.play();
     this.RunningSound.stop();
     this.SleepingSound.stop();
+    this.sleepingSign.setAlpha(0);
   }
 
   setStateToCollection() {
