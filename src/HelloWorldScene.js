@@ -31,6 +31,8 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   bonus = 0;
 
+  canResetGame = false;
+
   constructor() {
     super("hello-world");
   }
@@ -334,6 +336,7 @@ export default class HelloWorldScene extends Phaser.Scene {
     });
 
     this.startButton.on("pointerup", () => {
+      console.log("ButtonUp");
       if (this.state !== 1) return;
 
       this.setStateToStopped();
@@ -350,7 +353,7 @@ export default class HelloWorldScene extends Phaser.Scene {
       .setScale(1.2, 1.2);
     this.collectButton.setInteractive();
 
-    this.collectButton.on("pointerdown", () => {
+    this.collectButton.once("pointerdown", () => {
       this.balance += this.bet * this.multiplyer;
       this.betCollectedSequence();
       if (this.bush) this.bush.destroy();
@@ -393,7 +396,8 @@ export default class HelloWorldScene extends Phaser.Scene {
   }
 
   setStateToInitial() {
-    // console.log("TestInitial");
+    console.log("TestInitial");
+
     if (this.state === 0) return;
     this.progress = 0;
 
@@ -430,6 +434,10 @@ export default class HelloWorldScene extends Phaser.Scene {
 
     this.bonus = 0;
     this.state = 0;
+
+    this.time.delayedCall(100, () => {
+      this.startButton.setAlpha(1);
+    });
   }
 
   setStateToRunning() {
@@ -460,6 +468,8 @@ export default class HelloWorldScene extends Phaser.Scene {
     this.RunningSound.stop();
     this.SleepingSound.stop();
     this.sleepingSign.setAlpha(0);
+    this.canResetGame = true;
+    this.startButton.setAlpha(0);
   }
 
   setStateToCollection() {
@@ -492,12 +502,13 @@ export default class HelloWorldScene extends Phaser.Scene {
     if (this.redScreen.alpha < 0.8) {
       let currentalpha = this.redScreen.alpha;
       this.redScreen.setAlpha(currentalpha + deltaTime / 750);
-    } else {
+    } else if (this.canResetGame) {
       this.time.delayedCall(700, () => {
         console.log("Test");
         this.redScreen.setAlpha(0);
         this.setStateToInitial();
       });
+      this.canResetGame = false;
     }
   }
 
